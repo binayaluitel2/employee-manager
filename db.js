@@ -1,11 +1,11 @@
+//dependencies
 const mysql = require("mysql");
 require("dotenv").config();
 require("console.table");
 
+// file dependencies
 const connectionInfo = require("./dbinfo");
 const app = require("./index.js");
-
-console.log(app);
 
 const db = mysql.createConnection({
   host: connectionInfo.db_host,
@@ -15,6 +15,7 @@ const db = mysql.createConnection({
   database: "employeeTrackerDB",
 });
 
+// DB connection
 db.connect((err) => {
   if (err) throw err;
   app.init();
@@ -23,6 +24,7 @@ db.connect((err) => {
 var showAll = (table_name, callback) => {
   let query = "";
   if (table_name === "employees") {
+    // employees
     query = `SELECT emp1.firstName AS 'First Name', emp1.lastName AS 'Last Name', title AS 'Title', name AS 'Department', salary AS 'Salary', GROUP_CONCAT(DISTINCT emp2.firstName,' ', emp2.lastName) AS 'Manager'
         FROM employees emp1
         JOIN roles ON emp1.role_id = roles.id
@@ -31,6 +33,7 @@ var showAll = (table_name, callback) => {
         GROUP BY emp1.id
         ORDER BY emp1.lastName ASC`;
   } else if (table_name === "roles") {
+    // roles
     query = `SELECT title AS 'Position', name AS 'Department', salary AS 'Salary', COUNT(employees.role_id) AS 'Total Employees'
         FROM roles
         LEFT OUTER JOIN departments ON roles.department_id = departments.id
@@ -38,6 +41,7 @@ var showAll = (table_name, callback) => {
         GROUP BY roles.id
         ORDER BY title ASC`;
   } else if (table_name === "departments") {
+    //  departments
     query = `SELECT name AS 'Department', COUNT(roles.department_id) AS 'Total Roles'
         FROM departments
         LEFT OUTER JOIN roles ON roles.department_id = departments.id
@@ -53,10 +57,11 @@ var showAll = (table_name, callback) => {
   });
 };
 
-var createRow = (data, table_name) => {
+var createRow = (data, table_name, callback) => {
   db.query(`INSERT INTO ${table_name} SET ?`, [data], function (err, res) {
     if (err) throw err;
     console.log("\nSuccess! Added to " + table_name + ".\n");
+    callback();
   });
 };
 
@@ -74,12 +79,13 @@ var getSpecific = (columns, table) => {
   });
 };
 
-var update = (table_name, new_data, id) => {
+var update = (table_name, new_data, id, callback) => {
   db.query(
     "UPDATE ?? SET ? WHERE ?",
     [table_name, new_data, id],
     function (err, res) {
-      console.log("\nSuccessfully updated employee!\n");
+      console.log("\nSuccessfully updated " + table_name.slice(0, -1) + "!\n");
+      callback();
     }
   );
 };
@@ -93,7 +99,7 @@ var deleteRow = (table_name, id, callback) => {
         function (err, result) {
           if (err) throw err;
           console.log(
-            "\n Successfully deleted role and all employees associated with it.\n"
+            "\n Successfully deleted role and all employees.\n"
           );
           return callback();
         }
@@ -111,7 +117,7 @@ var deleteRow = (table_name, id, callback) => {
             function (err, result) {
               if (err) throw err;
               console.log(
-                "\n Successfully deleted department and the roles and employees associated with it. \n"
+                "\n Successfully deleted department and the roles and employees. \n"
               );
               callback();
             }
@@ -138,7 +144,7 @@ var getEmployeeChoices = function () {
       if (employeeChoices.length > 0) {
         resolve(employeeChoices);
       } else {
-        reject(new Error("There was a problem retrieving employees"));
+        reject(new Error("Error retrieving employees"));
       }
     });
   });
@@ -154,7 +160,7 @@ var getRoleChoices = function () {
       if (roleChoices.length > 0) {
         resolve(roleChoices);
       } else {
-        reject(new Error("There was a problem retrieving roles."));
+        reject(new Error("Error retrieving roles."));
       }
     });
   });
@@ -170,7 +176,7 @@ var getDepartmentChoices = function () {
       if (departmentChoices.length > 0) {
         resolve(departmentChoices);
       } else {
-        reject(new Error("There was a problem retrieving departments."));
+        reject(new Error("Error retrieving departments."));
       }
     });
   });
